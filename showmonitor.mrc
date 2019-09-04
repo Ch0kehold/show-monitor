@@ -5,25 +5,8 @@
 ; ============================================================================ ;
 ;                                                                              ;
 ; Author: Chokehold|                                                           ;
-; Script version: 1.0                                                          ;
+; Script version: 1.1                                                          ;
 ; mIRC version: 7.56+                                                          ;
-;                                                                              ;
-; ---------------------------------------------------------------------------- ;
-; Usage                                                                        ;
-;                                                                              ;
-; Right-click inside any channel, PM or status window                          ;
-; and select "TV Show Pre Monitor" to get started.                             ;
-;                                                                              ;
-; ---------------------------------------------------------------------------- ;
-; Known issues                                                                 ;
-;                                                                              ;
-;                                                                              ;
-; ---------------------------------------------------------------------------- ;
-; To do                                                                        ;
-;                                                                              ;
-; * Figure out what to do with Any choice in the source dropdown lol           ;
-;   (nested $iif to assume all other options I suppose)                        ;
-; * Build export feature                                                       ;
 ;                                                                              ;
 ; ---------------------------------------------------------------------------- ;
 
@@ -32,7 +15,7 @@
 ;;;;;;;;;;;;;;;
 
 alias showmon {
-var %sm.version v1.0 build 190829
+var %sm.version v1.1 build 190904
   writeini %sm.settingsfile General Version %sm.version  
   set %sm.datadir $scriptdir $+ showmonitor_files
   if ($exists($+(%sm.datadir,\,showmonitor_poster.jpg)) == $false) { 
@@ -43,7 +26,7 @@ var %sm.version v1.0 build 190829
     .remove $qt($+(%sm.datadir,\,showmonitor_poster.png)) 
   }
   if ($exists(%sm.datadir) == $false) {
-    echo -a 40,88[94,88 Show Monitor 40,88]60,88-40,88[94,88 Preparing for first run... 40,88]
+    echo -a $brkt(text,Preparing for first run...)
     var %runinit $?!="This seems to be the first time you're running this script. $crlf $+ $&
       Do you want to run automatic initialization?"
     if (%runinit == $true) { sm.init }
@@ -62,26 +45,25 @@ alias sm.init {
   set %sm.skiplistfile $scriptdir $+ showmonitor_files\showmonitor_skiplist.txt
   set %sm.premonitorfile $scriptdir $+ showmonitor_files\showmonitor_premonitor.ini
   if ($exists(%sm.datadir) == $false) {
-    echo -a $brkt(1) Show Monitor $brkt(x) Data directory not found, creating directory and generating necessary files... $brkt(2)
+    echo -a $brkt(text,Data directory not found $+ $chr(44) creating directory and generating necessary files...)
     mkdir $qt(%sm.datadir)
-    echo -a $brkt(1) Show Monitor $brkt(x) Create directory: $iif($exists(%sm.datadir) == $true,9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Create directory: $iif($exists(%sm.datadir) == $true,9OK,5Failed)) 
     write -c %sm.skiplistfile
-    echo -a $brkt(1) Show Monitor $brkt(x) Generate skiplist file: $iif($exists(%sm.skiplistfile),9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Generate skiplist file: $iif($exists(%sm.skiplistfile),9OK,5Failed)) 
     writeini %sm.settingsfile Initialize Initialization Success
-    echo -a $brkt(1) Show Monitor $brkt(x) Generate monitor settings file: $iif($exists(%sm.settingsfile),9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Generate monitor settings file: $iif($exists(%sm.settingsfile),9OK,5Failed)) 
     writeini %sm.premonitorfile Initialize Initialization Success
-    echo -a $brkt(1) Show Monitor $brkt(x) Generate prebot monitor file: $iif($exists(%sm.premonitorfile),9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Generate prebot monitor file: $iif($exists(%sm.premonitorfile),9OK,5Failed)) 
     writeini %sm.showfile Initialize Initialization Success
-    echo -a $brkt(1) Show Monitor $brkt(x) Generate show information file: $iif($exists(%sm.showfile),9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Generate show information file: $iif($exists(%sm.showfile),9OK,5Failed)) 
     remini %sm.settingsfile Initialize
-    echo -a $brkt(1) Show Monitor $brkt(x) Initialize monitor settings file: $iif($file(%sm.settingsfile).size == 0,9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Initialize monitor settings file: $iif($file(%sm.settingsfile).size == 0,9OK,5Failed)) 
     remini %sm.premonitorfile Initialize
-    echo -a $brkt(1) Show Monitor $brkt(x) Initialize prebot monitor file: $iif($file(%sm.premonitorfile).size == 0,9OK,5Failed) $brkt(2)
+    echo -a $brkt(text,Initialize prebot monitor file: $iif($file(%sm.premonitorfile).size == 0,9OK,5Failed)) 
     remini %sm.showfile Initialize
-    echo -a $brkt(1) Show Monitor $brkt(x) Initialize show information settings file: $iif($file(%sm.showfile).size == 0,9OK,5Failed) $brkt(2)
-    ;reload -rs1 $script
+    echo -a $brkt(text,Initialize show information settings file: $iif($file(%sm.showfile).size == 0,9OK,5Failed)) 
   }
-  echo -a $brkt(1) Show Monitor $brkt(x) End of initialization, type 9/showmon 14to get started! $brkt(2)
+  echo -a $brkt(text,End of initialization $+ $chr(44) type 9/showmon 14to get started!)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -92,7 +74,7 @@ dialog showmon {
   title [ TV Show Pre Monitor $readini(%sm.settingsfile,General,Version) ]
   size -1 -1 450 147
   option dbu
-  tab "TV Show Settings", 23, 0 -1 446 124
+  tab "TV Show Settings", 23, 0 -1 445 124
   button "Add new...", 6, 122 109 37 12, tab 23
   button "Show", 4, 122 14 37 12, tab 23
   edit "", 5, 234 22 132 10, tab 23 read
@@ -102,7 +84,7 @@ dialog showmon {
   text "Pre text to match", 10, 234 35 132 8, tab 23
   button "Save", 11, 233 109 133 12, tab 23
   text "Show name", 12, 234 14 132 8, tab 23
-  link "PogDesign TV Calendar", 13, 294 83 72 8, tab 23
+  link "PogDesign TV Calendar", 13, 167 111 57 8, tab 23
   link "IMDB info", 15, 294 56 33 8, tab 23
   edit "", 14, 294 64 35 10, tab 23
   link "TVMaze info", 16, 336 56 31 8, tab 23
@@ -111,11 +93,12 @@ dialog showmon {
   button "Remove", 3, 122 29 37 12, tab 23
   edit "", 42, 331 64 35 10, tab 23
   icon 44, 371 15 70 105, %sm.posterfile, 0, tab 23 noborder
+  text "Next Episode:", 38, 294 82 72 27, tab 23
   tab "Global Settings", 18
   combo 20, 9 22 58 98, tab 18 sort size
   button "Add", 21, 71 22 37 12, tab 18
   button "Remove", 22, 71 37 37 12, tab 18
-  list 48, 120 72 71 47, tab 18 size
+  list 48, 282 21 71 48, tab 18 size
   edit "", 25, 155 21 56 10, tab 18
   text "Network", 26, 120 22 34 8, tab 18
   edit "", 29, 155 45 56 10, tab 18
@@ -127,16 +110,16 @@ dialog showmon {
   check "Flash on match", 34, 360 42 50 10, tab 18
   check "Play sound on match", 35, 360 54 60 10, tab 18
   check "Balloon on match", 36, 360 66 53 10, tab 18
-  button "Get active window", 41, 120 56 49 12, tab 18
-  button "Remove", 37, 192 87 37 12, tab 18
-  button "Add", 46, 192 72 37 12, tab 18
-  text "Example line", 49, 228 22 31 8, tab 18
-  text "Result", 51, 243 46 16 8, tab 18
-  text "Max:", 52, 332 34 19 8, tab 18
-  text "Definition token: $", 54, 277 34 46 8, tab 18
-  edit "", 45, 261 21 92 10, tab 18 autohs
-  edit "", 55, 320 33 11 10, tab 18 limit 1
-  edit "", 56, 261 45 92 10, tab 18 read autohs
+  button "Get active window", 41, 231 54 49 12, tab 18
+  button "Remove", 37, 243 39 37 12, tab 18
+  button "Add", 46, 243 24 37 12, tab 18
+  text "Example line", 49, 120 77 31 8, tab 18
+  text "Result", 51, 120 101 16 8, tab 18
+  text "Max:", 52, 332 98 19 8, tab 18
+  text "Definition token: $", 54, 277 98 46 8, tab 18
+  edit "", 45, 120 85 233 10, tab 18 autohs
+  edit "", 55, 320 97 11 10, tab 18 limit 1
+  edit "", 56, 120 109 233 10, tab 18 read autohs
   box "Skiplist settings", 19, 3 13 113 110, tab 18
   box "Pre monitor settings", 24, 117 13 238 110, tab 18
   box "Notification settings", 31, 356 13 89 110, tab 18
@@ -172,6 +155,9 @@ alias sm.refresh {
   did -a showmon 1 Any
   writeini -n %sm.settingsfile SourceDef %sourcedef Any
   inc %sourcedef
+  did -a showmon 1 BDRip
+  writeini -n %sm.settingsfile SourceDef %sourcedef BDRip
+  inc %sourcedef
   did -a showmon 1 Bluray
   writeini -n %sm.settingsfile SourceDef %sourcedef Bluray
   inc %sourcedef
@@ -206,6 +192,7 @@ on 1:dialog:showmon:init:*:{
   set %sm.premonitorfile $scriptdir $+ showmonitor_files\showmonitor_premonitor.ini
   set %sm.skiplistfile $scriptdir $+ showmonitor_files\showmonitor_skiplist.txt
   sm.refresh
+  did -h showmon 38
 }
 
 ;;;;;;;;;;;;;;;;;;
@@ -224,6 +211,7 @@ alias sm.parser {
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 alias showmonshow {
+  did -h showmon 38
   did -o showmon 5 1 $did(showmon,2).seltext
   var %showsection $ini(%sm.showfile,$did(showmon,2).seltext)
   did -o showmon 7 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowPre)
@@ -231,7 +219,6 @@ alias showmonshow {
   did -o showmon 14 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowIMDB)
   did -o showmon 42 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowMaze)
   showmontvmaze
-  ;  did -v showmon 44
 }
 
 alias showmonpres {
@@ -632,7 +619,7 @@ on 1:dialog:showmon:sclick:43:{
     * Remove your monitored TV shows $crlf $+ $&
     * Remove the entire showmonitor_files directory $crlf $+ $&
     * Unload the script file from mIRC $crlf $+ $& 
-    * Unset all variables the script utilizes") == $true) {
+    * Unset all variables the script utilizes" == $true) {
     var %sm.remove $findfile(%sm.datadir,*,0,remove $qt($1-))
     rmdir $qt(%sm.datadir)
     dialog -x showmon
@@ -665,8 +652,14 @@ on 1:dialog:showmon:sclick:16:{
 
 
 alias showmontvmaze {
-  var %sm.mazeshow $replace($did(showmon,5).text,$chr(32),$chr(43))
-  var %sm.fulllink http://api.tvmaze.com/singlesearch/shows?q= $+ %sm.mazeshow
+  if ($did(showmon,42).text == $null) {
+    var %sm.mazeshow $replace($did(showmon,5).text,$chr(32),$chr(43))
+    var %sm.fulllink http://api.tvmaze.com/singlesearch/shows?q= $+ %sm.mazeshow
+  }
+  if (($did(showmon,42).text != $null) && ($did(showmon,42).text isnum)) {
+    var %sm.mazeid $did(showmon,42).text
+    var %sm.fulllink http://api.tvmaze.com/shows/ $+ %sm.mazeid
+  }
   var %tempget $urlget(%sm.fulllink,gf,$+(%sm.datadir,\,showmonitor_tvmaze.txt),sm.tvmazeparse)
 }  
 
@@ -686,13 +679,35 @@ alias sm.tvmazeparse {
     writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowMaze $left($right(%sm.tvmazeout,-6),$calc($pos($right(%sm.tvmazeout,-6),$chr(44),1)-1))
     did -o showmon 42 1 $left($right(%sm.tvmazeout,-6),$calc($pos($right(%sm.tvmazeout,-6),$chr(44),1)-1))
   }
+  ;Fetch next episode information, if available
+  if (nextepisode isin %sm.tvmazeout) {
+    var %sm.nextep $left($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,nextepisode,1)+21))),$calc($pos($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,nextepisode,1)+21))),",1)-1))
+    var %sm.nextepget $urlget(%sm.nextep,gf,$+(%sm.datadir,\,showmonitor_nextep.txt),sm.nextep)
+  }
   ;Set poster URL in vars and to ini file
   set %sm.mazeposter $left($right(%sm.tvmazeout,- $+ $calc($pos(%sm.tvmazeout,"medium":,1)+9)),$calc($pos($right(%sm.tvmazeout,- $+ $calc($pos(%sm.tvmazeout,"medium":,1)+9)),$chr(34),1)-1))
   writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowPoster [ %sm.mazeposter ]
   ;Do the poster things 
   sm.poster %sm.mazeposter
   .timerunset 1 3 unset %sm.*maze*
-  .timerremove 1 3 remove $urlget(%id).target
+  .timerremove 1 3 .remove $urlget(%id).target
+}
+
+alias sm.nextep {
+  var %sm.nextep.id $1
+  var %sm.nextep.out $read($urlget(%sm.nextep.id).target,1)
+  var %sm.nextep.date $left($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,airdate,1)+9))),$calc($pos($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,airdate,1)+9))),",1)-1))
+  var %sm.nextep.time $left($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,airtime,1)+9))),$calc($pos($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,airtime,1)+9))),",1)-1))
+  var %sm.nextep.season $left($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,season,1)+7))),$calc($pos($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,season,1)+8))),",1)-1))
+  var %sm.nextep.season S $+ $iif($len(%sm.nextep.season) == 1,0 $+ %sm.nextep.season,%sm.nextep.season)
+  var %sm.nextep.epno $left($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,number,1)+7))),$calc($pos($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,number,1)+8))),",1)-1))
+  var %sm.nextep.epno E $+ $iif($len(%sm.nextep.epno) == 1,0 $+ %sm.nextep.epno,%sm.nextep.epno)
+  var %sm.nextep.name $left($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,name,1)+6))),$calc($pos($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,name,1)+6))),",1)-1))
+  did -ra showmon 38 Next episode: %sm.nextep.season $+ %sm.nextep.epno $crlf $+ $&
+    %sm.nextep.name $crlf $+ $& 
+    %sm.nextep.date %sm.nextep.time EST
+  did -v showmon 38
+  .timerremovenext 1 3 .remove $urlget(%sm.nextep.id).target
 }
 
 alias sm.poster {
@@ -765,8 +780,6 @@ on *:TEXT:*:%sm.prechan:{
     inc %chancheck
   }
   :done
-  ;unset %sm.i
-  ;unset %sm.wholeline
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -774,6 +787,7 @@ on *:TEXT:*:%sm.prechan:{
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 alias brkt {
+  if ($1 == text) { return 28,88[94,88 Show Monitor 28,88]60,88-28,88[94,88 $2- 28,88]94,88 }
   if ($1 == logo) { return 28,88[94,88 Show Monitor 28,88]60,88-28,88[94,88 }
   if ($1 == 1) { return 28,88[94,88 }
   if ($1 == x) { return 28,88]60,88-28,88[94,88 }
@@ -789,7 +803,7 @@ alias reason {
 
 alias sm.output {
   var %findpre $wildtok(%sm.wholeline,$+(*,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre),*),1,32)
-  if ($1 == Pre) { return $+($brkt(1),54,PRE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) isin %findpre,$+($brkt(x),68,Quality match,$brkt(2)),$brkt(2)) }
+  if ($1 == Pre) { return $+($brkt(1),54,PRE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) == Any,$brkt(2),$iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) isin %findpre,$+($brkt(x),68,Quality match,$brkt(2)),$brkt(2))) }
   if ($1 == Nuke) { return $+($brkt(1),52,NUKE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $+($brkt(x),$reason(%sm.wholeline),$brkt(2)) }
   if ($1 == Modnuke) { return $+($brkt(1),40,MODNUKE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $+($brkt(x),$reason(%sm.wholeline),$brkt(2)) }
   if ($1 == Unnuke) { return $+($brkt(1),56,UNNUKE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $+($brkt(x),$reason(%sm.wholeline),$brkt(2)) }
