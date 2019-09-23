@@ -5,7 +5,7 @@
 ; ============================================================================ ;
 ;                                                                              ;
 ; Author: Chokehold|                                                           ;
-; Script version: 1.1                                                          ;
+; Script version: 1.2                                                          ;
 ; mIRC version: 7.56+                                                          ;
 ;                                                                              ;
 ; ---------------------------------------------------------------------------- ;
@@ -15,7 +15,7 @@
 ;;;;;;;;;;;;;;;
 
 alias showmon {
-var %sm.version v1.1 build 190904
+var %sm.version v1.2 build 190924
   writeini %sm.settingsfile General Version %sm.version  
   set %sm.datadir $scriptdir $+ showmonitor_files
   if ($exists($+(%sm.datadir,\,showmonitor_poster.jpg)) == $false) { 
@@ -82,7 +82,7 @@ dialog showmon {
   combo 1, 234 64 48 41, tab 23 sort drop
   text "Source", 9, 234 56 48 8, tab 23
   text "Pre text to match", 10, 234 35 132 8, tab 23
-  button "Save", 11, 233 109 133 12, tab 23
+  button "Save", 11, 234 109 133 12, tab 23
   text "Show name", 12, 234 14 132 8, tab 23
   link "PogDesign TV Calendar", 13, 167 111 57 8, tab 23
   link "IMDB info", 15, 294 56 33 8, tab 23
@@ -94,6 +94,7 @@ dialog showmon {
   edit "", 42, 331 64 35 10, tab 23
   icon 44, 371 15 70 105, %sm.posterfile, 0, tab 23 noborder
   text "Next Episode:", 38, 294 82 72 27, tab 23
+  button "Filters...", 39, 234 94 49 12, tab 23
   tab "Global Settings", 18
   combo 20, 9 22 58 98, tab 18 sort size
   button "Add", 21, 71 22 37 12, tab 18
@@ -128,6 +129,109 @@ dialog showmon {
   text "", 40, 56 125 343 20, center
 }
 
+;;;;;;;;;;;
+; FILTERS ;
+;;;;;;;;;;;
+
+on 1:dialog:showmon:sclick:39:{
+  if ($did(showmon,5).text != $null) { dialog -m sm.filters sm.filters }
+}
+
+on 1:dialog:sm.filters:init:0:{
+  did -h sm.filters 13
+  did -o sm.filters 3 1 $did(showmon,5).text
+  sm.filters
+}
+
+dialog -l sm.filters {
+  title "Filters"
+  size -1 -1 150 120
+  option dbu
+  button "Cancel", 1, 42 105 37 12, cancel
+  edit "", 3, 2 3 146 10, read center
+  button "Save", 2, 3 105 37 12
+  edit "", 4, 82 15 14 10
+  check "Limit to single season", 5, 4 15 62 10
+  text "S", 6, 78 16 4 8
+  check "Limit to release group", 7, 4 26 62 10
+  edit "", 8, 82 26 59 10
+  check "Limit to chosen source", 9, 4 37 65 10
+  edit "", 10, 82 37 59 10, read
+  check "Limit to single resolution", 11, 4 48 68 10
+  combo 12, 82 48 59 50, drop
+  edit "", 13, 82 59 59 10
+}
+
+on 1:dialog:sm.filters:sclick:2:{
+  ;This is the save button
+  ;Season filter
+  writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Season.Check $did(sm.filters,5).state
+  if ($did(sm.filters,4).text == $null) { remini %sm.showfile $qt($did(sm.filters,3).text) Filter.Season.Text }
+  else { writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Season.Text $iif($len($did(sm.filters,4).text) == 1,$+(0,$did(sm.filters,4).text),$did(sm.filters,4).text) }
+  ;Release group filter
+  writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Group.Check $did(sm.filters,7).state
+  if ($did(sm.filters,8).text == $null) { remini %sm.showfile $qt($did(sm.filters,3).text) Filter.Group.Text }
+  else { writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Group.Text $did(sm.filters,8).text }
+  ;Source filter
+  writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Source.Check $did(sm.filters,9).state
+  ;Resolution filter
+  writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Resolution.Check $did(sm.filters,11).state
+  writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Resolution.Choice $did(sm.filters,12).sel
+  if (($did(sm.filters,12).sel == 5) && ($did(sm.filters,13).text == $null)) { 
+    echo $brkt(text,Cannot save custom resolution filter without entering custom value.)
+    halt
+  }
+  elseif (($did(sm.filters,12).sel == 5) && ($did(sm.filters,13).text != $null)) { 
+    writeini -n %sm.showfile $qt($did(sm.filters,3).text) Filter.Resolution.Text $did(sm.filters,13).text 
+  }
+  dialog -x sm.filters
+}
+
+on 1:dialog:sm.filters:sclick:1:{
+  ;This is the cancel button
+  dialog -x sm.filters
+}
+
+alias sm.filters {
+  ;This alias populates the saved data for the selected show
+  var %i 1
+  did -a sm.filters 12 SD
+  writeini -n %sm.settingsfile FilterResDef %i SD
+  inc %i
+  did -a sm.filters 12 720p
+  writeini -n %sm.settingsfile FilterResDef %i 720p
+  inc %i
+  did -a sm.filters 12 1080p
+  writeini -n %sm.settingsfile FilterResDef %i 1080p
+  inc %i
+  did -a sm.filters 12 2160p
+  writeini -n %sm.settingsfile FilterResDef %i 2160p
+  inc %i
+  did -a sm.filters 12 Other
+  writeini -n %sm.settingsfile FilterResDef %i Other
+  inc %i
+  did $iif($readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Season.Check) == 1,-c,-u) sm.filters 5
+  did $iif($readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Group.Check) == 1,-c,-u) sm.filters 7
+  did $iif($readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Source.Check) == 1,-c,-u) sm.filters 9
+  did $iif($readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Resolution.Check) == 1,-c,-u) sm.filters 11 
+  did -c sm.filters 12 $readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Resolution.Choice)
+  did -o sm.filters 4 1 $readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Season.Text)
+  did -o sm.filters 8 1 $readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Group.Text)
+  did -o sm.filters 10 1 $readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$qt($did(sm.filters,3).text),ShowSource))
+  if ($did(sm.filters,12).sel == 5) { 
+    did -o sm.filters 13 1 $readini(%sm.showfile,$qt($did(sm.filters,3).text),Filter.Resolution.Text) 
+    did -v sm.filters 13
+  }
+}
+
+on 1:dialog:sm.filters:sclick:12:{
+  if ($did(sm.filters,12).sel == 5) { 
+    did -v sm.filters 13 
+  }
+  if ($did(sm.filters,12).sel != 5) { 
+    did -h sm.filters 13 
+  }
+}
 
 ;;;;;;;;;;;;;;;;;;;
 ; MONITOR REFRESH ;
@@ -137,7 +241,7 @@ alias sm.refresh {
   ;Clear everything first
   did -r showmon 2,1,20,14,42,5,7,48,25,28,29,45,55,48
   did -u showmon 2,20
-  did -h showmon 44
+  did -h showmon 44,38
   ;Populate shows list
   var %i 1
   while (%i <= $ini(%sm.showfile, 0)) {
@@ -180,6 +284,7 @@ alias sm.refresh {
     did -a showmon 48 $ini(%sm.premonitorfile, %i3)
     inc %i3
   }
+  sm.parser
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -202,7 +307,7 @@ on 1:dialog:showmon:init:*:{
 on 1:dialog:showmon:edit:45,55:{ sm.parser }
 
 alias sm.parser {
-  did -o showmon 56 1 $gettok($did(showmon,45).text,$did(showmon,55).text,32) for Example.Show.Pre.S01E01.720p.HDTV.x264-iND
+  did -o showmon 56 1 $gettok($$did(showmon,45).text,$$did(showmon,55).text,32) for Example.Show.Pre.S01E01.720p.HDTV.x264-iND
   did -ra showmon 52 Max: $numtok($did(showmon,45).text,32)
 }
 
@@ -216,7 +321,7 @@ alias showmonshow {
   var %showsection $ini(%sm.showfile,$did(showmon,2).seltext)
   did -o showmon 7 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowPre)
   did -c showmon 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowSource)
-  did -o showmon 14 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowIMDB)
+  if ($readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowIMDB) != Blank) { did -o showmon 14 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowIMDB) }
   did -o showmon 42 1 $readini(%sm.showfile,n,$ini(%sm.showfile,%showsection),ShowMaze)
   showmontvmaze
 }
@@ -297,7 +402,7 @@ on 1:dialog:showmon:sclick:6:{
 on 1:dialog:showmon:sclick:11:{
   writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowPre $did(showmon,7).text
   writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowSource $did(showmon,1).sel
-  writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowIMDB $did(showmon,14).text
+  writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowIMDB $iif($did(showmon,14).text == $null,Blank,$did(showmon,14).text)
   writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowMaze $did(showmon,42).text
   sm.refresh
 }
@@ -375,14 +480,6 @@ on 1:dialog:showmon:sclick:22,37:{
 
 on 1:dialog:showmon:sclick:8:{
   ;Save prebot settings
-  /*
-  if ($did(showmon,25).text != $null) { writeini -n %sm.settingsfile Pre Network $did(showmon,25).text }
-  if ($did(showmon,25).text == $null) { remini %sm.settingsfile Pre Network }
-  if ($did(showmon,28).text != $null) { writeini -n %sm.settingsfile Pre PreChan $did(showmon,28).text }
-  if ($did(showmon,28).text == $null) { remini %sm.settingsfile Pre PreChan }
-  if ($did(showmon,29).text != $null) { writeini -n %sm.settingsfile Pre BotNick $did(showmon,29).text }
-  if ($did(showmon,29).text == $null) { remini %sm.settingsfile Pre BotNick }
-  */
   if ($did(showmon,33).text != $null) { writeini -n %sm.settingsfile Notification Window $replace($did(showmon,33).text,$chr(32),$chr(46)) }
   if ($did(showmon,33).text == $null) { remini %sm.settingsfile Notification Window }
   writeini -n %sm.settingsfile Notification Flash $did(showmon,34).state
@@ -390,20 +487,6 @@ on 1:dialog:showmon:sclick:8:{
   writeini -n %sm.settingsfile Notification Balloon $did(showmon,36).state
   ;set %sm.prechan $readini(%sm.settingsfile,Pre,PreChan)
   var %closeerror 0
-  /* 
-  if ($readini(%sm.settingsfile,Pre,Network) == $null) {
-    echo -a 40,88[94,88 Show Monitor 40,88]60,88-40,88[11,1 Warning 40,88]60,88-40,88[94,88 Network field is empty 40,88]
-    inc %closeerror
-  }
-  if ($readini(%sm.settingsfile,Pre,PreChan) == $null) {
-    echo -a 40,88[94,88 Show Monitor 40,88]60,88-40,88[11,1 Warning 40,88]60,88-40,88[94,88 Pre channel field is empty 40,88]
-    inc %closeerror
-  }
-  if ($readini(%sm.settingsfile,Pre,BotNick) == $null) {
-    echo -a 40,88[94,88 Show Monitor 40,88]60,88-40,88[11,1 Warning 40,88]60,88-40,88[94,88 Prebot nick field is empty 40,88]
-    inc %closeerror
-  }
-  */
   if ($readini(%sm.settingsfile,Notification,Window) == $null) {
     echo -a 40,88[94,88 Show Monitor 40,88]60,88-40,88[11,1 Warning 40,88]60,88-40,88[94,88 Monitor window name field is empty 40,88]
     inc %closeerror
@@ -596,6 +679,11 @@ on 1:dialog:showmon:mouse:*:{
         Displays a notification balloon when there is a match. $crlf $+ $&
         Balloon is displayed for 5 seconds.
     }
+    if ($did == 39) { did -ra showmon 40 $&
+        Filters $crlf $+ $&
+        Choose additional filters for the selected TV show. $crlf $+ $&
+        Filter on season, resolution, release group, exclusive source, etc.
+    }
     set %sm.did $did
   }
 }
@@ -671,8 +759,11 @@ alias sm.tvmazeparse {
   did -o showmon 17 1 Status: %tvmazestatus
   ;If IMDB field is empty, fill it and write to ini file
   if ($did(showmon, 14).text == $null) {
-    did -o showmon 14 1 $left($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,"imdb":,1)+7))),9)
-    writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowIMDB $left($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,"imdb":,1)+7))),9)
+    set %sm.imdb $left($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,"imdb":,1)+7))),9)
+    if ($left(%sm.imdb,3) != ull) {
+      did -o showmon 14 1 $left($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,"imdb":,1)+7))),9)
+      writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowIMDB $left($right(%sm.tvmazeout, $+(-,$calc($pos(%sm.tvmazeout,"imdb":,1)+7))),9)
+    }
   }
   ;If TVMaze field is empty, fill it and write to ini file
   if ($did(showmon, 42).text == $null) {
@@ -685,7 +776,7 @@ alias sm.tvmazeparse {
     var %sm.nextepget $urlget(%sm.nextep,gf,$+(%sm.datadir,\,showmonitor_nextep.txt),sm.nextep)
   }
   ;Set poster URL in vars and to ini file
-  set %sm.mazeposter $left($right(%sm.tvmazeout,- $+ $calc($pos(%sm.tvmazeout,"medium":,1)+9)),$calc($pos($right(%sm.tvmazeout,- $+ $calc($pos(%sm.tvmazeout,"medium":,1)+9)),$chr(34),1)-1))
+  set %sm.mazeposter $left($right(%sm.tvmazeout,- $+ $calc($pos(%sm.tvmazeout,"original":,1)+11)),$calc($pos($right(%sm.tvmazeout,- $+ $calc($pos(%sm.tvmazeout,"original":,1)+11)),$chr(34),1)-1))
   writeini -n %sm.showfile " $+ $did(showmon,5).text $+ " ShowPoster [ %sm.mazeposter ]
   ;Do the poster things 
   sm.poster %sm.mazeposter
@@ -705,7 +796,7 @@ alias sm.nextep {
   var %sm.nextep.name $left($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,name,1)+6))),$calc($pos($right(%sm.nextep.out, $+(-,$calc($pos(%sm.nextep.out,name,1)+6))),",1)-1))
   did -ra showmon 38 Next episode: %sm.nextep.season $+ %sm.nextep.epno $crlf $+ $&
     %sm.nextep.name $crlf $+ $& 
-    %sm.nextep.date %sm.nextep.time EST
+    %sm.nextep.date %sm.nextep.time $iif(%sm.nextep.time != $null,EST)
   did -v showmon 38
   .timerremovenext 1 3 .remove $urlget(%sm.nextep.id).target
 }
@@ -741,36 +832,45 @@ on *:TEXT:*:%sm.prechan:{
       var %i 1
       while (%i <= $ini(%sm.showfile, 0)) {
         if ($readini(%sm.showfile,$ini(%sm.showfile,%i),ShowPre) isin $1-) {
-          var %i2 1
-          while (%i2 <= $lines(%sm.skiplistfile)) {
-            if ($read(%sm.skiplistfile,%i2) isin $1-) {
-              goto skip
+          var %findpre $wildtok($1-,$+(*,$v1,*),1,32)
+          if ($v1 == $left(%findpre,$len($v1))) {
+            var %i2 1
+            while (%i2 <= $lines(%sm.skiplistfile)) {
+              if ($read(%sm.skiplistfile,%i2) isin $1-) {
+                goto skip
+              }
+              inc %i2
             }
-            inc %i2
-          }
-          var %sm.window $+(@,$readini(%sm.settingsfile,Notification,Window))
-          $iif(!$window(%sm.window),window -es %sm.window)
-          set -u5 %sm.wholeline $1- 
-          set -u5 %sm.i %i
-          if (Pre isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
-            .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Pre,$ini(%sm.showfile,%i))
-            sm.notif Pre
-            goto done
-          }
-          if (Modnuke isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
-            .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Modnuke,$ini(%sm.showfile,%i))
-            sm.notif Modnuke
-            goto done
-          }
-          if (Unnuke isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
-            .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Unnuke,$ini(%sm.showfile,%i))
-            sm.notif Unnuke
-            goto done
-          }
-          if (Nuke isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
-            .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Nuke,$ini(%sm.showfile,%i))
-            sm.notif Nuke
-            goto done
+            var %sm.window $+(@,$readini(%sm.settingsfile,Notification,Window))
+            $iif(!$window(%sm.window),window -es %sm.window)
+            set -u5 %sm.wholeline $1- 
+            set -u5 %sm.i %i
+            if (($readini(%sm.showfile,$ini(%sm.showfile,%i),Filter.Season.Check) == 1) || ($readini(%sm.showfile,$ini(%sm.showfile,%i),Filter.Group.Check) == 1) || ($readini(%sm.showfile,$ini(%sm.showfile,%i),Filter.Source.Check) == 1) || ($readini(%sm.showfile,$ini(%sm.showfile,%i),Filter.Resolution.Check) == 1)) { 
+              sm.filtercheck 
+              if (%filterfail >= 1) { 
+                goto done 
+              }
+            }
+            if (Pre isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
+              .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Pre,$ini(%sm.showfile,%i))
+              sm.notif Pre
+              goto done
+            }
+            if (Modnuke isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
+              .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Modnuke,$ini(%sm.showfile,%i))
+              sm.notif Modnuke
+              goto done
+            }
+            if (Unnuke isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
+              .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Unnuke,$ini(%sm.showfile,%i))
+              sm.notif Unnuke
+              goto done
+            }
+            if (Nuke isin $gettok($1-,$readini(%sm.premonitorfile,$ini(%sm.premonitorfile,%chancheck),Token),32)) {
+              .timernotify 1 3 aline -hp %sm.window $timestamp $sm.output(Nuke,$ini(%sm.showfile,%i))
+              sm.notif Nuke
+              goto done
+            }
           }
         }
         inc %i
@@ -780,6 +880,45 @@ on *:TEXT:*:%sm.prechan:{
     inc %chancheck
   }
   :done
+}
+
+alias sm.filtercheck {
+  var %findpre $wildtok(%sm.wholeline,$+(*,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre),*),1,32)
+  set -u3 %filterfail 0
+  ;season check
+  if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Season.Check) == 1) {
+    if ($+(S,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Season.Text)) !isin $mid(%findpre,$len($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre)),5)) { 
+      inc %filterfail 
+    }
+  }
+  ;group check
+  if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Group.Check) == 1) {
+    if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Group.Text) != $right(%findpre,$len($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Group.Text)))) { 
+      inc %filterfail
+    }
+  }
+  ;source check
+  if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Source.Check) == 1) {
+    if ($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) == Any) { goto next }
+    if ($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) !isin $mid(%findpre,$len($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre)),$len(%findpre))) {
+      inc %filterfail
+    }
+    :next
+  }
+  ;resolution check
+  if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Resolution.Check) == 1) {
+    var %resCheck $iif($readini(%sm.settingsfile,FilterResDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Resolution.Choice)) == Other,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Resolution.Text),$readini(%sm.settingsfile,FilterResDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Resolution.Choice)))
+    if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Resolution.Choice) == 1) { 
+      if ((0p isin $mid(%findpre,$len($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre)),$len(%findpre))) || (UHD isin $mid(%findpre,$len($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre)),$len(%findpre)))) {
+        inc %filterfail
+      }
+    }
+    if ($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),Filter.Resolution.Choice) >= 2) {
+      if ($count($mid(%findpre,$len($readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre)),$len(%findpre)),%resCheck) < 1) {
+        inc %filterfail
+      }
+    }
+  }  
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -797,13 +936,20 @@ alias brkt {
 alias reason {
   var %findpre $wildtok($1-,$+(*,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre),*),1,32)
   var %findpre $findtok($1-,%findpre,1,32)
-  var %findnuke $matchtok($gettok($1-,$+($calc(%findpre + 1),-),32),$chr(46),1,32)
-  return $replace(%findnuke,[,$null,],$null)
+  var %i $calc(%findpre + 1)
+  while (%i <= $numtok($1-,32)) {
+    smecho $gettok($1-,%i,32)
+    if (($replace($gettok($1-,%i,32),[,$null,],$null) isalnum) || ($chr(46) isin $replace($gettok($1-,%i,32),[,$null,],$null))) { 
+      var %findnuke $replace($gettok($1-,%i,32),[,$null,],$null)
+    }
+    inc %i
+  }
+  return %findnuke
 }
 
 alias sm.output {
   var %findpre $wildtok(%sm.wholeline,$+(*,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowPre),*),1,32)
-  if ($1 == Pre) { return $+($brkt(1),54,PRE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) == Any,$brkt(2),$iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) isin %findpre,$+($brkt(x),68,Quality match,$brkt(2)),$brkt(2))) }
+  if ($1 == Pre) { return $+($brkt(1),54,PRE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) == Any,$brkt(2),$iif($readini(%sm.settingsfile,SourceDef,$readini(%sm.showfile,$ini(%sm.showfile,%sm.i),ShowSource)) isin %findpre,$+($brkt(x),68,Source match,$brkt(2)),$brkt(2))) }
   if ($1 == Nuke) { return $+($brkt(1),52,NUKE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $+($brkt(x),$reason(%sm.wholeline),$brkt(2)) }
   if ($1 == Modnuke) { return $+($brkt(1),40,MODNUKE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $+($brkt(x),$reason(%sm.wholeline),$brkt(2)) }
   if ($1 == Unnuke) { return $+($brkt(1),56,UNNUKE,$brkt(x),,$readini(%sm.showfile,$2,SecretColor),$2,$brkt(x)) %findpre $+($brkt(x),$reason(%sm.wholeline),$brkt(2)) }
