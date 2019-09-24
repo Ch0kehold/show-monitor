@@ -1,4 +1,4 @@
-# TV Show Pre Monitor v1.1
+# TV Show Pre Monitor v1.2
 A mIRC script that monitors defined pre channels for your favorite TV shows and gives a notification when an episode is released online.
 
 ---
